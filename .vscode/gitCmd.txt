@@ -1,0 +1,12 @@
+git commends:
+
+git add .
+git commit -m "your commit"
+git remote add origin https://yourURL/hare
+git remote
+git push 
+git stash
+git pull
+git stash apply
+git merge master (master theke preview pull)
+git merge preview (preview theke master pull)

@@ -1,0 +1,31 @@
+=> My all extaition are hare:
+
+1.  Auto Rename Tag
+2.  Better Comment
+3.  Bracket Pair Colorization Toggler
+4.  Code Spell Checket
+5.  Color Highlight 
+6.  Css Peek
+7.  Dummy Text Generator
+8.  ES7+ React/Redux//React-Native snippets
+9.  HTML CSS Support
+10. ES7 React/Redux/GraphQL/React-Native snippets
+11. GitLens
+12. HTML End Tag Labels
+13. Hungry Delete
+14. IntelliSense for CSS Class
+15. JavaScript (ES6) Code snippets
+16. Live Sass Compilet
+17. Prettier Code Formatter 
+18. Live Server
+19. Markdown Preview Enhanced
+20. Material Icon Theme
+21. Bootstrap Intellisenss
+22. Prisma
+23. Tailwind CSS IntelliSense
+24. Thunder Client
+25. Windsurf Plugin (Ai Support)
+26. GitHub Copilot
+27. Code Runner
+
+;

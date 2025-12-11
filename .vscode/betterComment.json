@@ -1,0 +1,90 @@
+{
+    "workbench.iconTheme": "material-icon-theme",
+    "files.autoSave": "afterDelay",
+    "editor.minimap.enabled": false,
+
+    "better-comments.tags": [
+        
+        {
+            "tag": "R",
+            "color": "#FF2D00",
+            "italic": true
+        },
+        {
+            "tag": "B",
+            "color": "#3498DB",
+            "italic": true
+        },
+        {
+            "tag": "//",
+            "color": "#474747",
+            "strikethrough": true,
+            "italic": true
+        },
+        {
+            "tag": "O",
+            "color": "#FF8C00"
+        },
+        {
+            "tag": "G",
+            "color": "#98C379",
+            "italic": true
+        },
+        {
+            "tag": "I",
+            "color": "#6610f2",
+            "italic": true
+        },
+        {
+            "tag": "Y",
+            "color": "#ffc107",
+            "italic": true
+        },
+        {
+            "tag": "W",
+            "color": "#fff3cd",
+            "italic": true
+        },
+        {
+            "tag": "D",
+            "color": "#000000",
+            "italic": true
+        }
+    ],
+
+    "files.associations": {
+        "*.js": "javascriptreact",
+        "*.jsx": "javascriptreact",
+        "*.ts": "typescriptreact",
+        "*.tsx": "typescriptreact"
+    },
+
+    "better-comments.multilineComments": true,
+    "git.autofetch": true,
+    "breadcrumbs.enabled": false,
+    "editor.stickyScroll.enabled": false,
+    "[javascriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[html]": {
+        "editor.defaultFormatter": "vscode.html-language-features"
+    },
+    "prettier.htmlWhitespaceSensitivity": "strict",
+    "prettier.endOfLine": "auto",
+    "prettier.bracketSameLine": true,
+    "[css]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[json]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[javascript]": {
+        "editor.formatOnSave": true
+    },
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    }
+}
