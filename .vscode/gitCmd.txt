@@ -2,7 +2,7 @@ git commends:
 
 git add .
 git commit -m "your commit"
-git remote add origin https://yourURL/hare
+git remote add origin https://github.com/DarkRahi999/Transaction_Backend.git
 git remote
 git push 
 git stash

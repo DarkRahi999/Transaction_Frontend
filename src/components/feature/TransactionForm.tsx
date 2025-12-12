@@ -1,20 +1,20 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { transactionSchema, TransactionFormData, updateTransaction } from '@/services/transaction.service';
-import { TransactionRes } from '@/interface/book';
+import { transactionSchema, TransactionFormData, addTransaction } from '@/services/transaction.service';
+import { TransactionRes } from '@/interface/transaction';
+import { useSearchParams } from 'next/navigation';
 
-interface EditTransactionFormProps {
-  transaction: TransactionRes;
-  onTransactionUpdated: (updatedTransaction: TransactionRes) => void;
-  onCancel: () => void;
+interface ExpenseFormProps {
+  onTransactionAdded: (transaction: TransactionRes) => void;
 }
 
-export function EditTransactionForm({ transaction, onTransactionUpdated, onCancel }: EditTransactionFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
+export function ExpenseForm({ onTransactionAdded }: ExpenseFormProps) {
+  const searchParams = useSearchParams();
+  const typeParam = searchParams.get('type');
+
   const {
     register,
     handleSubmit,
@@ -28,29 +28,31 @@ export function EditTransactionForm({ transaction, onTransactionUpdated, onCance
       updatedAt: true 
     })),
     defaultValues: {
-      amount: transaction.amount,
-      type: transaction.type as "income" | "expense",
-      category: transaction.category as any,
-      description: transaction.description || '',
-      transactionDate: transaction.transactionDate.split('T')[0],
+      amount: 0,
+      type: typeParam === 'expense' ? 'expense' : 'income',
+      category: 'salary',
+      transactionDate: new Date().toISOString().split('T')[0],
     }
   });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const onSubmit = async (data: TransactionFormData) => {
     setIsSubmitting(true);
     try {
-      const updatedTransaction = await updateTransaction(transaction.id, data);
-      onTransactionUpdated(updatedTransaction);
+      const newTransaction = await addTransaction(data);
+      onTransactionAdded(newTransaction);
+      reset();
     } catch (error) {
-      console.error('Error updating transaction:', error);
-      alert(error instanceof Error ? error.message : 'Failed to update transaction');
+      console.error('Error adding transaction:', error);
+      alert(error instanceof Error ? error.message : 'Failed to add transaction');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 p-4 bg-gray-50 rounded-lg">
+    <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
         <input
@@ -123,20 +125,13 @@ export function EditTransactionForm({ transaction, onTransactionUpdated, onCance
         {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>}
       </div>
       
-      <div className="lg:col-span-5 flex justify-end space-x-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-        >
-          Cancel
-        </button>
+      <div className="lg:col-span-5 flex justify-end">
         <button
           type="submit"
           disabled={isSubmitting}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+          className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
         >
-          {isSubmitting ? 'Updating...' : 'Update Transaction'}
+          {isSubmitting ? 'Adding...' : 'Add Transaction'}
         </button>
       </div>
     </form>

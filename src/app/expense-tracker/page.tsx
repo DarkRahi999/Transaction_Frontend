@@ -1,105 +1,76 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { TransactionRes } from '@/interface/book';
-import { getTransactions, deleteTransaction, getTransactionSummary, getMonthlySummary, TransactionSummary, MonthlySummary } from '@/services/transaction.service';
-import { ExpenseForm } from '@/components/feature/expense-form';
-import { EditTransactionForm } from '@/components/feature/edit-transaction-form';
+import Link from 'next/link';
+import { getPaginatedTransactions, getMonthlySummaryByTransaction, deleteTransaction } from '@/services/transaction.service';
+import { TransactionRes, MonthlySummary } from '@/interface/transaction';
 
 export default function ExpenseTracker() {
   const [transactions, setTransactions] = useState<TransactionRes[]>([]);
-  const [summary, setSummary] = useState<TransactionSummary>({ 
-    totalIncome: 0, 
-    totalExpense: 0, 
-    currentBalance: 0,
-    netBalance: 0
-  });
-  const [monthlySummaries, setMonthlySummaries] = useState<MonthlySummary[]>([]);
+  const [monthlySummary, setMonthlySummary] = useState<MonthlySummary>({ totalIncome: 0, totalExpense: 0, netBalance: 0, month: '', year: 0, transactionCount: 0 });
   const [loading, setLoading] = useState(true);
-  const [editingTransaction, setEditingTransaction] = useState<TransactionRes | null>(null);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalRecords: 0
+  });
 
-  // Fetch transactions and summary
-  useEffect(() => {
-    fetchTransactions();
-    fetchSummary();
-    fetchMonthlySummaries();
-  }, []);
-
-  const fetchTransactions = async () => {
+  // Fetch current month summary
+  const fetchCurrentMonthSummary = async () => {
     try {
-      const data = await getTransactions();
-      console.log('Fetched transactions:', data); // Debug log
-      setTransactions(data);
-      setLoading(false);
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1; // JavaScript months are 0-indexed
+      const data = await getMonthlySummaryByTransaction(year, month);
+      setMonthlySummary(data);
+    } catch (error) {
+      console.error('Error fetching current month summary:', error);
+    }
+  };
+
+  // Fetch paginated transactions
+  const fetchTransactions = async (page: number = 1) => {
+    setLoading(true);
+    try {
+      const response = await getPaginatedTransactions(page, 10);
+      setTransactions(response.data);
+      setPagination({
+        currentPage: response.currentPage,
+        totalPages: response.totalPages,
+        totalRecords: response.totalRecords
+      });
     } catch (error) {
       console.error('Error fetching transactions:', error);
+    } finally {
       setLoading(false);
     }
   };
 
-  const fetchSummary = async () => {
-    try {
-      const data = await getTransactionSummary();
-      setSummary(data);
-    } catch (error) {
-      console.error('Error fetching summary:', error);
-    }
-  };
-
-  const fetchMonthlySummaries = async () => {
-    try {
-      const data = await getMonthlySummary();
-      console.log('Fetched monthly summaries:', data); // Debug log
-      setMonthlySummaries(data);
-    } catch (error) {
-      console.error('Error fetching monthly summaries:', error);
-    }
-  };
-
-  const handleTransactionAdded = (newTransaction: TransactionRes) => {
-    setTransactions(prev => [newTransaction, ...prev]);
-    fetchSummary(); // Refresh summary
-    fetchMonthlySummaries(); // Refresh monthly summaries
-  };
-
-  const handleTransactionUpdated = (updatedTransaction: TransactionRes) => {
-    setTransactions(prev => 
-      prev.map(transaction => 
-        transaction.id === updatedTransaction.id ? updatedTransaction : transaction
-      )
-    );
-    setEditingTransaction(null);
-    fetchSummary(); // Refresh summary
-    fetchMonthlySummaries(); // Refresh monthly summaries
-  };
-
+  // Handle delete transaction
   const handleDelete = async (id: number) => {
-    try {
-      await deleteTransaction(id);
-      setTransactions(prev => prev.filter(transaction => transaction.id !== id));
-      fetchSummary(); // Refresh summary
-      fetchMonthlySummaries(); // Refresh monthly summaries
-    } catch (error) {
-      console.error('Error deleting transaction:', error);
-      alert(error instanceof Error ? error.message : 'Failed to delete transaction');
+    if (window.confirm('Are you sure you want to delete this transaction?')) {
+      try {
+        await deleteTransaction(id);
+        // Refresh the transaction list
+        fetchTransactions(pagination.currentPage);
+        // Also refresh the monthly summary
+        fetchCurrentMonthSummary();
+      } catch (error) {
+        console.error('Error deleting transaction:', error);
+        alert('Failed to delete transaction');
+      }
     }
   };
 
-  const startEditing = (transaction: TransactionRes) => {
-    setEditingTransaction(transaction);
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    fetchTransactions(page);
   };
 
-  const cancelEditing = () => {
-    setEditingTransaction(null);
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    fetchCurrentMonthSummary();
+    fetchTransactions(1);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -110,147 +81,127 @@ export default function ExpenseTracker() {
           <p className="text-gray-600 mt-2">Track your income and expenses effortlessly</p>
         </div>
 
-        {/* Summary Cards */}
+        {/* Current Month Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-medium text-gray-700">Total Income</h3>
-            <p className="text-3xl font-bold text-green-500 mt-2">৳{summary.totalIncome.toFixed(2)}</p>
+            <h3 className="text-lg font-medium text-gray-700">Current Month Income</h3>
+            <p className="text-3xl font-bold text-green-500 mt-2">৳{monthlySummary.totalIncome?.toFixed(2) || '0.00'}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-medium text-gray-700">Total Expenses</h3>
-            <p className="text-3xl font-bold text-red-500 mt-2">৳{summary.totalExpense.toFixed(2)}</p>
+            <h3 className="text-lg font-medium text-gray-700">Current Month Expenses</h3>
+            <p className="text-3xl font-bold text-red-500 mt-2">৳{monthlySummary.totalExpense?.toFixed(2) || '0.00'}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-medium text-gray-700">Current Balance</h3>
-            <p className={`text-3xl font-bold mt-2 ${summary.netBalance >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-              ৳{summary.netBalance.toFixed(2)}
+            <h3 className="text-lg font-medium text-gray-700">Current Month Balance</h3>
+            <p className={`text-3xl font-bold mt-2 ${monthlySummary.netBalance ? (monthlySummary.netBalance >= 0 ? 'text-green-500' : 'text-red-500') : 'text-gray-500'}`}>
+              ৳{monthlySummary.netBalance?.toFixed(2) || '0.00'}
             </p>
           </div>
         </div>
 
-        {/* Monthly Summary Section */}
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Monthly Summary</h2>
-          {monthlySummaries.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Month</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Income</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expenses</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Net</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {monthlySummaries.map((summary, index) => (
-                    <tr key={`${summary.month}-${summary.year}`}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {summary.month} {summary.year}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600">
-                        ৳{summary.totalIncome.toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">
-                        ৳{summary.totalExpense.toFixed(2)}
-                      </td>
-                      <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${summary.netBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        ৳{summary.netBalance.toFixed(2)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="text-gray-500 text-center py-4">No monthly data available</p>
-          )}
+        {/* Action Bar */}
+        <div className="bg-white rounded-lg shadow p-6 mb-8 flex justify-between items-center">
+          <h2 className="text-xl font-bold text-gray-800">Transactions</h2>
+          <Link 
+            href="/expense-tracker/create" 
+            className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded"
+          >
+            Add New Transaction
+          </Link>
         </div>
-
-        {/* Add Transaction Form */}
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Add New Transaction</h2>
-          <ExpenseForm onTransactionAdded={handleTransactionAdded} />
-        </div>
-
-        {/* Edit Transaction Form (if editing) */}
-        {editingTransaction && (
-          <div className="bg-white rounded-lg shadow p-6 mb-8">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Edit Transaction</h2>
-            <EditTransactionForm 
-              transaction={editingTransaction} 
-              onTransactionUpdated={handleTransactionUpdated}
-              onCancel={cancelEditing}
-            />
-          </div>
-        )}
 
         {/* Transactions List */}
         <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-800">Recent Transactions</h2>
-          </div>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {transactions.map((transaction) => (
-                  <tr key={transaction.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(transaction.transactionDate).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {transaction.description || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
-                      {transaction.category}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
-                      {transaction.type}
-                    </td>
-                    <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
-                      transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      ৳{transaction.amount.toFixed(2)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      ৳{transaction.balance?.toFixed(2) || '0.00'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={() => startEditing(transaction)}
-                        className="text-blue-600 hover:text-blue-900 mr-3"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(transaction.id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {transactions.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500">
-                      No transactions found
-                    </td>
-                  </tr>
+            {loading ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500">Loading transactions...</p>
+              </div>
+            ) : (
+              <>
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {transactions.map((transaction) => (
+                      <tr key={transaction.id}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {new Date(transaction.transactionDate).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {transaction.description || '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
+                          {transaction.category}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
+                          {transaction.type}
+                        </td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
+                          transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          ৳{transaction.amount.toFixed(2)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          ৳{transaction.balance?.toFixed(2) || '0.00'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <Link 
+                            href={`/expense-tracker/${transaction.id}`}
+                            className="text-blue-600 hover:text-blue-900"
+                          >
+                            Edit
+                          </Link>
+                          <button
+                            onClick={() => handleDelete(transaction.id)}
+                            className="ml-2 text-red-600 hover:text-red-900"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {transactions.length === 0 && (
+                      <tr>
+                        <td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500">
+                          No transactions found
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+                
+                {/* Pagination */}
+                {pagination.totalPages > 1 && (
+                  <div className="flex justify-center mt-4 pb-4">
+                    <nav className="inline-flex rounded-md shadow">
+                      {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(number => (
+                        <button
+                          key={number}
+                          onClick={() => handlePageChange(number)}
+                          className={`px-3 py-1 rounded-md mx-1 ${
+                            pagination.currentPage === number
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-white text-gray-700 hover:bg-gray-100'
+                          }`}
+                        >
+                          {number}
+                        </button>
+                      ))}
+                    </nav>
+                  </div>
                 )}
-              </tbody>
-            </table>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -1,6 +1,15 @@
 import { API_URLS } from "@/config/configURL";
+import { 
+  TransactionRes, 
+  TransactionSummary, 
+  DailySummary, 
+  MonthlySummary, 
+  YearlySummary, 
+  WeeklySummary, 
+  TotalSummaryReport,
+  PaginatedResponse
+} from "@/interface/transaction";
 import axios, { AxiosResponse } from "axios";
-import { TransactionRes } from "@/interface/book";
 
 // Zod schemas for validation
 import { z } from "zod";
@@ -30,42 +39,49 @@ export type TransactionFormData = z.infer<typeof transactionSchema>;
 export type TransactionType = z.infer<typeof TransactionTypeEnum>;
 export type TransactionCategory = z.infer<typeof TransactionCategoryEnum>;
 
-// Response interfaces
-export interface TransactionSummary {
-  totalIncome: number;
-  totalExpense: number;
-  currentBalance: number;
-  netBalance: number;
-}
-
-export interface MonthlySummary {
-  month: string;
-  year: number;
-  totalIncome: number;
-  totalExpense: number;
-  netBalance: number;
-}
-
 // Service functions
 export async function getTransactions(): Promise<TransactionRes[]> {
   try {
-    const response = await axios.get<any, AxiosResponse<TransactionRes[]>>(
+    const response = await axios.get<unknown, AxiosResponse<TransactionRes[]>>(
       API_URLS.transaction.getTransactions()
     );
     return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to fetch transactions");
+  } catch (error: unknown) {
+    throw new Error(
+      axios.isAxiosError(error) && error.response?.data?.message
+        ? error.response.data.message
+        : "Failed to fetch transactions"
+    );
+  }
+}
+
+export async function getPaginatedTransactions(page: number = 1, limit: number = 10): Promise<PaginatedResponse<TransactionRes>> {
+  try {
+    const response = await axios.get<unknown, AxiosResponse<PaginatedResponse<TransactionRes>>>(
+      API_URLS.transaction.getPaginatedTransactions(page, limit)
+    );
+    return response.data;
+  } catch (error: unknown) {
+    throw new Error(
+      axios.isAxiosError(error) && error.response?.data?.message
+        ? error.response.data.message
+        : "Failed to fetch paginated transactions"
+    );
   }
 }
 
 export async function getTransaction(id: number): Promise<TransactionRes> {
   try {
-    const response = await axios.get<any, AxiosResponse<TransactionRes>>(
+    const response = await axios.get<unknown, AxiosResponse<TransactionRes>>(
       API_URLS.transaction.getTransaction(id)
     );
     return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to fetch transaction");
+  } catch (error: unknown) {
+    throw new Error(
+      axios.isAxiosError(error) && error.response?.data?.message
+        ? error.response.data.message
+        : "Failed to fetch transaction"
+    );
   }
 }
 
@@ -79,17 +95,21 @@ export async function addTransaction(data: TransactionFormData): Promise<Transac
       updatedAt: true 
     }).parse(data);
     
-    const response = await axios.post<any, AxiosResponse<TransactionRes>>(
+    const response = await axios.post<unknown, AxiosResponse<TransactionRes>>(
       API_URLS.transaction.addTransaction(),
       validatedData
     );
     return response.data;
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof z.ZodError) {
       const firstError = error.issues[0];
       throw new Error(firstError.message);
     }
-    throw new Error(error.response?.data?.message || "Failed to add transaction");
+    throw new Error(
+      axios.isAxiosError(error) && error.response?.data?.message
+        ? error.response.data.message
+        : "Failed to add transaction"
+    );
   }
 }
 
@@ -103,117 +123,198 @@ export async function updateTransaction(id: number, data: Partial<TransactionFor
       updatedAt: true 
     }).parse(data);
     
-    const response = await axios.patch<any, AxiosResponse<TransactionRes>>(
+    const response = await axios.patch<unknown, AxiosResponse<TransactionRes>>(
       API_URLS.transaction.updateTransaction(id),
       validatedData
     );
     return response.data;
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof z.ZodError) {
       const firstError = error.issues[0];
       throw new Error(firstError.message);
     }
-    throw new Error(error.response?.data?.message || "Failed to update transaction");
+    throw new Error(
+      axios.isAxiosError(error) && error.response?.data?.message
+        ? error.response.data.message
+        : "Failed to update transaction"
+    );
   }
 }
 
 export async function deleteTransaction(id: number): Promise<void> {
   try {
-    await axios.delete(API_URLS.transaction.deleteTransaction(id));
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to delete transaction");
+    await axios.delete<unknown>(API_URLS.transaction.deleteTransaction(id));
+  } catch (error: unknown) {
+    throw new Error(
+      axios.isAxiosError(error) && error.response?.data?.message
+        ? error.response.data.message
+        : "Failed to delete transaction"
+    );
   }
 }
 
 export async function getTransactionSummary(): Promise<TransactionSummary> {
   try {
-    const response = await axios.get<any, AxiosResponse<TransactionSummary>>(
+    const response = await axios.get<unknown, AxiosResponse<TransactionSummary>>(
       API_URLS.transaction.getSummary()
     );
     return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to fetch summary");
+  } catch (error: unknown) {
+    throw new Error(
+      axios.isAxiosError(error) && error.response?.data?.message
+        ? error.response.data.message
+        : "Failed to fetch summary"
+    );
   }
 }
 
-export async function getDailySummary(date: string): Promise<any> {
+export async function getDailySummary(date: string): Promise<DailySummary> {
   try {
-    const response = await axios.get(
+    const response = await axios.get<unknown, AxiosResponse<DailySummary>>(
       API_URLS.transaction.getDailySummary(date)
     );
     return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to fetch daily summary");
+  } catch (error: unknown) {
+    throw new Error(
+      axios.isAxiosError(error) && error.response?.data?.message
+        ? error.response.data.message
+        : "Failed to fetch daily summary"
+    );
   }
 }
 
-export async function getMonthlySummary(): Promise<MonthlySummary[]> {
+export async function getMonthlySummaryByTransaction(year: number, month: number): Promise<MonthlySummary> {
   try {
-    // Since there's no dedicated backend endpoint, we'll group transactions by month
-    const transactions = await getTransactions();
-    
-    // Check if we have transactions
-    if (!transactions || transactions.length === 0) {
-      return [];
-    }
-    
-    // Group transactions by month/year
-    const monthlyData: Record<string, { income: number; expense: number; year: number; month: string }> = {};
-    
-    transactions.forEach(transaction => {
-      // Validate transaction date
-      const date = new Date(transaction.transactionDate);
-      
-      // Check if date is valid
-      if (isNaN(date.getTime())) {
-        console.warn('Invalid date for transaction:', transaction);
-        return;
-      }
-      
-      const monthYearKey = `${date.getFullYear()}-${date.getMonth()}`;
-      const monthName = date.toLocaleString('default', { month: 'long' });
-      const year = date.getFullYear();
-      
-      if (!monthlyData[monthYearKey]) {
-        monthlyData[monthYearKey] = { income: 0, expense: 0, year, month: monthName };
-      }
-      
-      if (transaction.type === 'income') {
-        monthlyData[monthYearKey].income += transaction.amount;
-      } else {
-        monthlyData[monthYearKey].expense += transaction.amount;
-      }
-    });
-    
-    // Convert to array and calculate net balance
-    const result: MonthlySummary[] = Object.values(monthlyData).map(item => ({
-      month: item.month,
-      year: item.year,
-      totalIncome: parseFloat(item.income.toFixed(2)),
-      totalExpense: parseFloat(item.expense.toFixed(2)),
-      netBalance: parseFloat((item.income - item.expense).toFixed(2))
-    })).sort((a, b) => {
-      // Sort by year first (descending), then by month
-      if (b.year !== a.year) {
-        return b.year - a.year;
-      }
-      
-      // For the same year, sort by month (descending - recent months first)
-      // We'll use the month names to get proper ordering
-      const months = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
-      ];
-      
-      const monthIndexA = months.indexOf(a.month);
-      const monthIndexB = months.indexOf(b.month);
-      
-      return monthIndexB - monthIndexA; // Descending order
-    });
-    
-    return result;
-  } catch (error: any) {
-    console.error('Error in getMonthlySummary:', error);
-    throw new Error(error.response?.data?.message || "Failed to fetch monthly summary");
+    const response = await axios.get<unknown, AxiosResponse<MonthlySummary>>(
+      API_URLS.transaction.getMonthlySummary(year, month)
+    );
+    return response.data;
+  } catch (error: unknown) {
+    throw new Error(
+      axios.isAxiosError(error) && error.response?.data?.message
+        ? error.response.data.message
+        : "Failed to fetch monthly summary"
+    );
+  }
+}
+
+export async function getYearlySummaryByTransaction(year: number): Promise<YearlySummary> {
+  try {
+    const response = await axios.get<unknown, AxiosResponse<YearlySummary>>(
+      API_URLS.transaction.getYearlySummary(year)
+    );
+    return response.data;
+  } catch (error: unknown) {
+    throw new Error(
+      axios.isAxiosError(error) && error.response?.data?.message
+        ? error.response.data.message
+        : "Failed to fetch yearly summary"
+    );
+  }
+}
+
+// App level summary reports
+export async function getTotalSummaryReport(): Promise<TotalSummaryReport> {
+  try {
+    const response = await axios.get<unknown, AxiosResponse<TotalSummaryReport>>(
+      API_URLS.summary.getTotal()
+    );
+    return response.data;
+  } catch (error: unknown) {
+    throw new Error(
+      axios.isAxiosError(error) && error.response?.data?.message
+        ? error.response.data.message
+        : "Failed to fetch total summary report"
+    );
+  }
+}
+
+export async function getWeeklySummaryReport(startDate: string): Promise<WeeklySummary> {
+  try {
+    const response = await axios.get<unknown, AxiosResponse<WeeklySummary>>(
+      API_URLS.summary.getWeekly(startDate)
+    );
+    return response.data;
+  } catch (error: unknown) {
+    throw new Error(
+      axios.isAxiosError(error) && error.response?.data?.message
+        ? error.response.data.message
+        : "Failed to fetch weekly summary report"
+    );
+  }
+}
+
+export async function getMonthlySummaryReport(year: number, month: number): Promise<MonthlySummary> {
+  try {
+    const response = await axios.get<unknown, AxiosResponse<MonthlySummary>>(
+      API_URLS.summary.getMonthly(year, month)
+    );
+    return response.data;
+  } catch (error: unknown) {
+    throw new Error(
+      axios.isAxiosError(error) && error.response?.data?.message
+        ? error.response.data.message
+        : "Failed to fetch monthly summary report"
+    );
+  }
+}
+
+export async function getCurrentMonthSummaryReport(): Promise<MonthlySummary> {
+  try {
+    const response = await axios.get<unknown, AxiosResponse<MonthlySummary>>(
+      API_URLS.summary.getCurrentMonth()
+    );
+    return response.data;
+  } catch (error: unknown) {
+    throw new Error(
+      axios.isAxiosError(error) && error.response?.data?.message
+        ? error.response.data.message
+        : "Failed to fetch current month summary report"
+    );
+  }
+}
+
+export async function getPaginatedMonthlySummaries(page: number = 1, limit: number = 5): Promise<PaginatedResponse<MonthlySummary>> {
+  try {
+    const response = await axios.get<unknown, AxiosResponse<PaginatedResponse<MonthlySummary>>>(
+      API_URLS.summary.getPaginatedMonthly(page, limit)
+    );
+    return response.data;
+  } catch (error: unknown) {
+    throw new Error(
+      axios.isAxiosError(error) && error.response?.data?.message
+        ? error.response.data.message
+        : "Failed to fetch paginated monthly summaries"
+    );
+  }
+}
+
+export async function getYearlySummaryReport(year: number): Promise<YearlySummary> {
+  try {
+    const response = await axios.get<unknown, AxiosResponse<YearlySummary>>(
+      API_URLS.summary.getYearly(year)
+    );
+    return response.data;
+  } catch (error: unknown) {
+    throw new Error(
+      axios.isAxiosError(error) && error.response?.data?.message
+        ? error.response.data.message
+        : "Failed to fetch yearly summary report"
+    );
+  }
+}
+
+export async function getPaginatedYearlySummaries(page: number = 1, limit: number = 5): Promise<PaginatedResponse<YearlySummary>> {
+  try {
+    const response = await axios.get<unknown, AxiosResponse<PaginatedResponse<YearlySummary>>>(
+      API_URLS.summary.getPaginatedYearly(page, limit)
+    );
+    return response.data;
+  } catch (error: unknown) {
+    throw new Error(
+      axios.isAxiosError(error) && error.response?.data?.message
+        ? error.response.data.message
+        : "Failed to fetch paginated yearly summaries"
+    );
   }
 }
