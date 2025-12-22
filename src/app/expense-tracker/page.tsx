@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getPaginatedTransactions, getMonthlySummaryByTransaction, deleteTransaction } from '@/services/transaction.service';
 import { TransactionRes, MonthlySummary } from '@/interface/transaction';
+import { Eye, Minus, Plus } from 'lucide-react';
 
 export default function ExpenseTracker() {
   const [transactions, setTransactions] = useState<TransactionRes[]>([]);
@@ -82,7 +83,7 @@ export default function ExpenseTracker() {
         </div>
 
         {/* Current Month Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-2">
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-medium text-gray-700">Current Month Income</h3>
             <p className="text-3xl font-bold text-green-500 mt-2">৳{monthlySummary.totalIncome?.toFixed(2) || '0.00'}</p>
@@ -99,14 +100,33 @@ export default function ExpenseTracker() {
           </div>
         </div>
 
-        {/* Action Bar */}
-        <div className="bg-white rounded-lg shadow p-6 mb-8 flex justify-between items-center">
-          <h2 className="text-xl font-bold text-gray-800">Transactions</h2>
-          <Link 
-            href="/expense-tracker/create" 
-            className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded"
-          >
-            Add New Transaction
+        {/* Mini Action Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+          <Link href="/expense-tracker/create?type=income" className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-center">
+              <div className="bg-green-100 p-1 rounded-full mr-4">
+                <Plus className="text-green-600 font-bold text-xl" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-800">Add Income</h3>
+            </div>
+          </Link>
+
+          <Link href="/expense-tracker/create?type=expense" className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-center">
+              <div className="bg-red-100 p-1 rounded-full mr-4">
+                <Minus className="text-red-600 font-bold text-xl" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-800">Add Expense</h3>
+            </div>
+          </Link>
+
+          <Link href="/expense-tracker" className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-center">
+              <div className="bg-blue-100 p-1 rounded-full mr-4">
+                <Eye className="text-blue-600 font-bold text-xl" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-800">View Transactions</h3>
+            </div>
           </Link>
         </div>
 
@@ -146,16 +166,15 @@ export default function ExpenseTracker() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
                           {transaction.type}
                         </td>
-                        <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
-                          transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
-                        }`}>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                          }`}>
                           ৳{transaction.amount.toFixed(2)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           ৳{transaction.balance?.toFixed(2) || '0.00'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <Link 
+                          <Link
                             href={`/expense-tracker/${transaction.id}`}
                             className="text-blue-600 hover:text-blue-900"
                           >
@@ -179,7 +198,7 @@ export default function ExpenseTracker() {
                     )}
                   </tbody>
                 </table>
-                
+
                 {/* Pagination */}
                 {pagination.totalPages > 1 && (
                   <div className="flex justify-center mt-4 pb-4">
@@ -188,11 +207,10 @@ export default function ExpenseTracker() {
                         <button
                           key={number}
                           onClick={() => handlePageChange(number)}
-                          className={`px-3 py-1 rounded-md mx-1 ${
-                            pagination.currentPage === number
+                          className={`px-3 py-1 rounded-md mx-1 ${pagination.currentPage === number
                               ? 'bg-blue-500 text-white'
                               : 'bg-white text-gray-700 hover:bg-gray-100'
-                          }`}
+                            }`}
                         >
                           {number}
                         </button>
