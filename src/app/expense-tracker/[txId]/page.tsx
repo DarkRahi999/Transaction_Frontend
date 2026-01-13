@@ -31,11 +31,11 @@ export default function EditTransactionPage() {
   }, [txId, fetchTransaction]);
 
   const handleTransactionUpdated = () => {
-    router.push('/expense-tracker');
+    router.push('/');
   };
 
   const handleCancel = () => {
-    router.push('/expense-tracker');
+    router.push('/');
   };
 
   if (loading) {

@@ -11,7 +11,7 @@ export default function CreateTransactionPage() {
   const [recentTransactions, setRecentTransactions] = useState<TransactionRes[]>([]);
 
   const handleTransactionAdded = () => {
-    router.push('/expense-tracker');
+    router.push('/');
   };
 
   // Fetch recent transactions
