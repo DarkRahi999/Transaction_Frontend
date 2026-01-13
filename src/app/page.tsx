@@ -2,28 +2,55 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { getPaginatedTransactions, deleteTransaction } from '@/services/transaction.service';
-import { TransactionRes, MonthlySummary } from '@/interface/transaction';
+import { getPaginatedTransactions, deleteTransaction, getYearlySummary, getMonthlySummary } from '@/services/transaction.service';
+import { TransactionRes } from '@/interface/transaction';
 import { Eye, Minus, Plus } from 'lucide-react';
 
 export default function page() {
   const [transactions, setTransactions] = useState<TransactionRes[]>([]);
-  const [monthlySummary, setMonthlySummary] = useState<MonthlySummary>({ totalIncome: 0, totalExpense: 0, netBalance: 0, month: '', year: 0, transactionCount: 0 });
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
     totalRecords: 0
   });
+  const [yearlySummary, setYearlySummary] = useState<any>({
+    yearlyIncome: 0,
+    yearlyExpense: 0,
+    currentBalance: 0
+  });
+  const [monthlySummary, setMonthlySummary] = useState<any>({
+    monthlyIncome: 0,
+    monthlyExpense: 0,
+    currentBalance: 0
+  });
+  const [summaryLoading, setSummaryLoading] = useState({
+    yearly: true,
+    monthly: true
+  });
 
-  // Fetch current month summary
-  const fetchCurrentMonthSummary = async () => {
+  // Fetch yearly and monthly summaries
+  const fetchYearlySummary = async () => {
+    setSummaryLoading(prev => ({ ...prev, yearly: true }));
     try {
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = now.getMonth() + 1; // JavaScript months are 0-indexed
+      const data = await getYearlySummary();
+      setYearlySummary(data);
     } catch (error) {
-      console.error('Error fetching current month summary:', error);
+      console.error('Error fetching yearly summary:', error);
+    } finally {
+      setSummaryLoading(prev => ({ ...prev, yearly: false }));
+    }
+  };
+
+  const fetchMonthlySummary = async () => {
+    setSummaryLoading(prev => ({ ...prev, monthly: true }));
+    try {
+      const data = await getMonthlySummary();
+      setMonthlySummary(data);
+    } catch (error) {
+      console.error('Error fetching monthly summary:', error);
+    } finally {
+      setSummaryLoading(prev => ({ ...prev, monthly: false }));
     }
   };
 
@@ -53,7 +80,7 @@ export default function page() {
         // Refresh the transaction list
         fetchTransactions(pagination.currentPage);
         // Also refresh the monthly summary
-        fetchCurrentMonthSummary();
+
       } catch (error) {
         console.error('Error deleting transaction:', error);
         alert('Failed to delete transaction');
@@ -67,8 +94,9 @@ export default function page() {
   };
 
   useEffect(() => {
-    fetchCurrentMonthSummary();
     fetchTransactions(1);
+    fetchYearlySummary();
+    fetchMonthlySummary();
   }, []);
 
   return (
@@ -80,20 +108,38 @@ export default function page() {
           <p className="text-gray-600 mt-2">Track your income and expenses effortlessly</p>
         </div>
 
+        {/* Yearly Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-2">
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-medium text-gray-700">Current Year Income</h3>
+            <p className="text-3xl font-bold text-green-500 mt-2">৳{yearlySummary.yearlyIncome?.toFixed(2) || '0.00'}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-medium text-gray-700">Current Year Expenses</h3>
+            <p className="text-3xl font-bold text-red-500 mt-2">৳{yearlySummary.yearlyExpense?.toFixed(2) || '0.00'}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-medium text-gray-700">Current Balance</h3>
+            <p className={`text-3xl font-bold mt-2 ${yearlySummary.currentBalance ? (yearlySummary.currentBalance >= 0 ? 'text-green-500' : 'text-red-500') : 'text-gray-500'}`}>
+              ৳{yearlySummary.currentBalance?.toFixed(2) || '0.00'}
+            </p>
+          </div>
+        </div>
+
         {/* Current Month Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-2">
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-medium text-gray-700">Current Month Income</h3>
-            <p className="text-3xl font-bold text-green-500 mt-2">৳{monthlySummary.totalIncome?.toFixed(2) || '0.00'}</p>
+            <p className="text-3xl font-bold text-green-500 mt-2">৳{monthlySummary.monthlyIncome?.toFixed(2) || '0.00'}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-medium text-gray-700">Current Month Expenses</h3>
-            <p className="text-3xl font-bold text-red-500 mt-2">৳{monthlySummary.totalExpense?.toFixed(2) || '0.00'}</p>
+            <p className="text-3xl font-bold text-red-500 mt-2">৳{monthlySummary.monthlyExpense?.toFixed(2) || '0.00'}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-medium text-gray-700">Current Month Balance</h3>
-            <p className={`text-3xl font-bold mt-2 ${monthlySummary.netBalance ? (monthlySummary.netBalance >= 0 ? 'text-green-500' : 'text-red-500') : 'text-gray-500'}`}>
-              ৳{monthlySummary.netBalance?.toFixed(2) || '0.00'}
+            <p className={`text-3xl font-bold mt-2 ${monthlySummary.currentBalance ? (monthlySummary.currentBalance >= 0 ? 'text-green-500' : 'text-red-500') : 'text-gray-500'}`}>
+              ৳{monthlySummary.currentBalance?.toFixed(2) || '0.00'}
             </p>
           </div>
         </div>

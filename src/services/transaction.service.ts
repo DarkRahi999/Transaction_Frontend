@@ -154,32 +154,28 @@ export async function deleteTransaction(id: number): Promise<void> {
 }
 
 // App level summary reports
-export async function getTotalSummaryReport(): Promise<TotalSummaryReport> {
+export async function getMonthlySummary(): Promise<any> {
   try {
-    const response = await axios.get<unknown, AxiosResponse<TotalSummaryReport>>(
-      API_URLS.summary.getTotal()
-    );
+    const response = await axios.get(API_URLS.summary.getCurrentMonth());
     return response.data;
   } catch (error: unknown) {
     throw new Error(
       axios.isAxiosError(error) && error.response?.data?.message
         ? error.response.data.message
-        : "Failed to fetch total summary report"
+        : "Failed to fetch monthly summary"
     );
   }
 }
 
-export async function getMonthlySummaryReport(year: number, month: number): Promise<MonthlySummary> {
+export async function getYearlySummary(): Promise<any> {
   try {
-    const response = await axios.get<unknown, AxiosResponse<MonthlySummary>>(
-      API_URLS.summary.getCurrentMonth(year, month)
-    );
+    const response = await axios.get(API_URLS.summary.getCurrentYearly());
     return response.data;
   } catch (error: unknown) {
     throw new Error(
       axios.isAxiosError(error) && error.response?.data?.message
         ? error.response.data.message
-        : "Failed to fetch monthly summary report"
+        : "Failed to fetch yearly summary"
     );
   }
 }

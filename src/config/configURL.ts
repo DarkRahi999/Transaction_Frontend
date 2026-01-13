@@ -14,7 +14,7 @@ export const API_URLS = {
   },
   // App level summary reports
   summary: {
-    getTotal: () => `${API}/`,
-    getCurrentMonth: (year: number, month: number) => `${API}/current-month-summary?year=${year}&month=${month}`,
+    getCurrentMonth: () => `${API}/monthly-summary`,
+    getCurrentYearly: () => `${API}/yearly-summary`,
   }
 };
